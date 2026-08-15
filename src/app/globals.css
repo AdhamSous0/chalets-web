@@ -1,26 +1,105 @@
 @import "tailwindcss";
 
+/* ============================================================
+   نظام التصميم — منقول حرفيًا من تطبيق الموبايل
+   lib/theme/app_theme.dart
+   ممنوع كتابة أي لون أو مقاس مباشرة داخل المكوّنات.
+   ============================================================ */
+@theme {
+  /* الألوان */
+  --color-teal: #0f766e;
+  --color-teal-light: #e0f2f1;
+  --color-sand: #d9a57c;
+  --color-ground: #faf9f6;
+  --color-ink: #1f2937;
+  --color-ink-muted: #6b7280;
+  --color-ink-faint: #9ca3af;
+  --color-line: #e0dcd4;
+  --color-type-card: #f0ede4;
+  --color-img: #c9beac;
+  --color-ok: #16a34a;
+  --color-danger: #dc2626;
+
+  /* أنصاف الأقطار */
+  --radius-btn: 12px;
+  --radius-field: 12px;
+  --radius-card: 14px;
+  --radius-chip: 20px;
+
+  /* أحجام الخط — نفس سلّم التطبيق */
+  --text-display: 28px;
+  --text-headline: 24px;
+  --text-title: 22px;
+  --text-section: 18px;
+  --text-button: 16px;
+  --text-body-lg: 15px;
+  --text-body: 14px;
+  --text-small: 13px;
+  --text-caption: 12px;
+  --text-tiny: 11px;
+  --text-badge: 10px;
+
+  /* الخطوط — Cairo للعربي، Inter للإنجليزي (زي التطبيق) */
+  --font-ar: "Cairo", "Segoe UI", "Noto Sans Arabic", Tahoma, sans-serif;
+  --font-en: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+
+/* المقاسات المشتركة مع التطبيق، كمتغيرات عادية */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --pad-screen: 20px;
+  --gap: 12px;
+  --shell: 1200px;
+  --header-h: 72px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html {
+  background: var(--color-ground);
+  color: var(--color-ink);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* الخط بيتبدّل مع اللغة زي التطبيق بالضبط */
+html[lang="ar"] body {
+  font-family: var(--font-ar);
+}
+html[lang="en"] body {
+  font-family: var(--font-en);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-size: var(--text-body-lg);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* حاوية الصفحة */
+.shell {
+  max-width: var(--shell);
+  margin-inline: auto;
+  padding-inline: var(--pad-screen);
+}
+
+/* تركيز واضح للوحة المفاتيح */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* إخفاء شريط التمرير للصفوف الأفقية */
+.no-bar {
+  scrollbar-width: none;
+}
+.no-bar::-webkit-scrollbar {
+  display: none;
 }

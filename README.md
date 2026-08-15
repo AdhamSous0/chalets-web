@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# شاليهاتي — الموقع
 
-## Getting Started
+موقع الزبائن. **Next.js 16 · React 19 · TypeScript · Tailwind 4**
 
-First, run the development server:
+مبني بنفس نظام تصميم تطبيق الموبايل (`D:\chalets_app`) — نفس الألوان والمقاسات
+والقواميس والبيانات الوهمية، بس بتخطيطات ويب مش نسخة موبايل.
+
+## التشغيل
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run dev     # http://localhost:3000
+npm run build   # بناء الإنتاج
+npx tsc --noEmit
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## الصفحات
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| المسار | الوصف |
+|---|---|
+| `/` | واجهة أولى فيها بحث، شاليهات مميزة، تصفح حسب النوع، كيف بتحجز |
+| `/search` | فلاتر بقائمة جانبية لاصقة + شبكة نتائج + ترتيب + حالة فارغة |
+| `/chalet/[id]` | معرض صور، وصف، مرافق، أسعار، خريطة، **بطاقة حجز لاصقة** |
+| `/booking/[id]` | تقويم، عدد أشخاص، طريقة دفع، ملخص لاصق، ونتيجة نجاح/فشل |
+| `/account` | تبويبات: حجوزاتي، المفضلة، بياناتي — مع وضع الزائر |
+| `/login` | جوال ← رمز تحقق ٤ خانات |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+كل صفحة شاليه وحجز مولّدة ساكنة وقت البناء (SSG) — رابط مستقل قابل للأرشفة والمشاركة.
 
-## Learn More
+## البنية
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/                  الصفحات (App Router)
+├── components/
+│   ├── ui.tsx            الأزرار والكروت والشرائح والحقول والعدّاد
+│   ├── icons.tsx         أيقونات المرافق والأنواع
+│   ├── chalet-card.tsx   كرت الشاليه (شبكة + صف)
+│   ├── site-header.tsx   الهيدر مع تبديل اللغة
+│   └── site-footer.tsx
+└── lib/
+    ├── data.ts           ★ النماذج والبيانات الوهمية
+    ├── strings.ts        ★ كل النصوص عربي/إنجليزي
+    ├── app-context.tsx   اللغة والمستخدم والمفضلة
+    └── format.ts         تنسيق التواريخ
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## القواعد
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **ممنوع** لون أو مقاس مكتوب مباشرة — كله توكنات في `src/app/globals.css` تحت `@theme`
+2. **ممنوع** نص ثابت — كله من `t()` في `strings.ts`
+3. استخدم `start`/`end` مش `left`/`right` عشان الاتجاه ينقلب صح
 
-## Deploy on Vercel
+## اللغة والاتجاه
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+التبديل من الهيدر. بيغيّر `lang` و `dir` على `<html>` والخط معهم — عربي Cairo، إنجليزي Inter.
+الاختيار بينحفظ بالمتصفح.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## المشترك مع تطبيق الموبايل
+
+نفس الألوان الاثنعش، نفس المقاسات، نفس سلّم الخط، نفس ١٠ مرافق و٣ أنواع و٦ مدن،
+نفس ٨ شاليهات و٤ حجوزات، نفس منطق الفلترة، ونفس شرط فشل الحجز (مدى بيمرّ فوق يوم محجوز).
+
+## الخطوة الجاية — الباكاند
+
+الوحيد اللي بيتغيّر هو `src/lib/data.ts`: بدّل المصفوفات بنداءات API.
+نفس الإشي بالتطبيق (`lib/data/dummy_data.dart`) — فباكاند واحد بيخدم الاثنين.
+
+**لسه ما انبنى:** باكاند، دفع حقيقي، تسجيل فعلي، صور حقيقية، خريطة حقيقية.
