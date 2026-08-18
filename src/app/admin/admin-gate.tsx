@@ -7,8 +7,8 @@ import { Button, Input } from "@/components/ui";
 import { useApp } from "@/lib/app-context";
 import { AdminClient } from "./admin-client";
 
-/** حسابنا الوحيد حاليًا — مزروع بسكربت التعبئة (prisma/seed.ts) */
-const ADMIN_EMAIL = "admin@chalets.ps";
+/** لازم يطابق ADMIN_EMAIL بالباك إند (نفس القيمة اللي زرعها prisma/seed.ts) */
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "admin@chalets.ps";
 
 /**
  * بوابة دخول الأدمن — بتستدعي /auth/admin-login الحقيقي وتخزّن الـ JWT.
