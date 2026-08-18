@@ -127,6 +127,62 @@ export async function createChalet(payload: NewChaletPayload, adminToken: string
   return withAbsoluteMedia(chalet);
 }
 
+export interface UpdateChaletPayload {
+  nameAr: string;
+  nameEn: string;
+  cityKey: CityKey;
+  areaAr: string;
+  areaEn: string;
+  typeKey: TypeKey;
+  capacity: number;
+  priceWeekday: number;
+  priceWeekend: number;
+  lat: number;
+  lng: number;
+  amenities: AmenityKey[];
+  descriptionAr: string;
+  descriptionEn: string;
+  ownerNameAr: string;
+  ownerNameEn: string;
+  contacts: { type: ContactType; value: string }[];
+  acceptedPaymentMethods: PaymentMethod[];
+  images: File[];
+  video: File | null;
+  removeMediaIds: string[];
+}
+
+export async function updateChalet(id: string, payload: UpdateChaletPayload, adminToken: string): Promise<Chalet> {
+  const fd = new FormData();
+  fd.set("nameAr", payload.nameAr);
+  fd.set("nameEn", payload.nameEn);
+  fd.set("cityKey", payload.cityKey);
+  fd.set("areaAr", payload.areaAr);
+  fd.set("areaEn", payload.areaEn);
+  fd.set("typeKey", payload.typeKey);
+  fd.set("capacity", String(payload.capacity));
+  fd.set("priceWeekday", String(payload.priceWeekday));
+  fd.set("priceWeekend", String(payload.priceWeekend));
+  fd.set("lat", String(payload.lat));
+  fd.set("lng", String(payload.lng));
+  fd.set("amenities", JSON.stringify(payload.amenities));
+  fd.set("descriptionAr", payload.descriptionAr);
+  fd.set("descriptionEn", payload.descriptionEn);
+  fd.set("ownerNameAr", payload.ownerNameAr);
+  fd.set("ownerNameEn", payload.ownerNameEn);
+  fd.set("contacts", JSON.stringify(payload.contacts));
+  fd.set("acceptedPaymentMethods", JSON.stringify(payload.acceptedPaymentMethods));
+  fd.set("removeMediaIds", JSON.stringify(payload.removeMediaIds));
+  for (const img of payload.images) fd.append("media", img);
+  if (payload.video) fd.append("media", payload.video);
+
+  const chalet = await request<Chalet>(`/chalets/${id}`, {
+    method: "PATCH",
+    headers: authHeader(adminToken),
+    body: fd,
+  });
+  return withAbsoluteMedia(chalet);
+}
+
 /* ---------- المستخدمون (أدمن) ---------- */
 
 export function getUsers(adminToken: string): Promise<AdminUser[]> {

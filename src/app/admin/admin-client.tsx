@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { IconCalendar, IconCheck, IconLocation, IconStar, IconUser } from "@/components/icons";
 import { Button, Card, Chip, Input, SectionHead } from "@/components/ui";
 import { useApp } from "@/lib/app-context";
-import { createChalet, getChalets, getUsers, ApiError } from "@/lib/api";
+import { createChalet, updateChalet, getChalets, getUsers, ApiError } from "@/lib/api";
 import { getAdminToken } from "@/lib/admin-session";
 import {
   ALL_AMENITIES,
@@ -18,6 +18,7 @@ import {
   type Chalet,
   type CityKey,
   type ContactType,
+  type MediaItem,
   type PaymentMethod,
   type TypeKey,
 } from "@/lib/data";
@@ -68,8 +69,12 @@ export function AdminClient() {
   const [images, setImages] = useState<File[]>([]);
   const [video, setVideo] = useState<File | null>(null);
   const [justAdded, setJustAdded] = useState(false);
+  const [justUpdated, setJustUpdated] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [existingMedia, setExistingMedia] = useState<MediaItem[]>([]);
+  const [removeMediaIds, setRemoveMediaIds] = useState<string[]>([]);
 
   const token = getAdminToken();
 
@@ -112,6 +117,49 @@ export function AdminClient() {
   const removeContact = (i: number) =>
     setForm((prev) => ({ ...prev, contacts: prev.contacts.filter((_, idx) => idx !== i) }));
 
+  const startEdit = (c: Chalet) => {
+    setEditingId(c.id);
+    setForm({
+      nameAr: c.nameAr,
+      nameEn: c.nameEn,
+      cityKey: c.cityKey,
+      areaAr: c.areaAr,
+      areaEn: c.areaEn,
+      typeKey: c.typeKey,
+      capacity: c.capacity,
+      priceWeekday: c.priceWeekday,
+      priceWeekend: c.priceWeekend,
+      amenities: c.amenities,
+      descriptionAr: c.descriptionAr,
+      descriptionEn: c.descriptionEn,
+      ownerNameAr: c.ownerNameAr,
+      ownerNameEn: c.ownerNameEn,
+      contacts: c.contacts.map((ct) => ({ type: ct.type, value: ct.value })),
+      acceptedPaymentMethods: c.acceptedPaymentMethods,
+    });
+    setExistingMedia(c.media ?? []);
+    setRemoveMediaIds([]);
+    setImages([]);
+    setVideo(null);
+    setSubmitError(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setExistingMedia([]);
+    setRemoveMediaIds([]);
+    setImages([]);
+    setVideo(null);
+    setSubmitError(null);
+  };
+
+  const removeExistingMedia = (id: string) => {
+    setExistingMedia((prev) => prev.filter((m) => m.id !== id));
+    setRemoveMediaIds((prev) => [...prev, id]);
+  };
+
   const onImagesSelected = (files: FileList | null) => {
     if (!files) return;
     // نسخة فورية من FileList — عشان ما تنفرغ لو انعادت استدعاء الدالة (StrictMode) بعد ما نصفّر input.value
@@ -133,24 +181,43 @@ export function AdminClient() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const created = await createChalet(
-        {
-          ...form,
-          ...CITY_COORDS[form.cityKey],
-          contacts: form.contacts.filter((c) => c.value.trim()),
-          images,
-          video,
-        },
-        token,
-      );
-      setChalets((prev) => [created, ...prev]);
-      setForm(emptyForm);
-      setImages([]);
-      setVideo(null);
-      setJustAdded(true);
-      setTimeout(() => setJustAdded(false), 4000);
+      if (editingId) {
+        const updated = await updateChalet(
+          editingId,
+          {
+            ...form,
+            ...CITY_COORDS[form.cityKey],
+            contacts: form.contacts.filter((c) => c.value.trim()),
+            images,
+            video,
+            removeMediaIds,
+          },
+          token,
+        );
+        setChalets((prev) => prev.map((c) => (c.id === editingId ? updated : c)));
+        cancelEdit();
+        setJustUpdated(true);
+        setTimeout(() => setJustUpdated(false), 4000);
+      } else {
+        const created = await createChalet(
+          {
+            ...form,
+            ...CITY_COORDS[form.cityKey],
+            contacts: form.contacts.filter((c) => c.value.trim()),
+            images,
+            video,
+          },
+          token,
+        );
+        setChalets((prev) => [created, ...prev]);
+        setForm(emptyForm);
+        setImages([]);
+        setVideo(null);
+        setJustAdded(true);
+        setTimeout(() => setJustAdded(false), 4000);
+      }
     } catch (err) {
-      setSubmitError(err instanceof ApiError ? err.message : "تعذّرت إضافة الشاليه");
+      setSubmitError(err instanceof ApiError ? err.message : "تعذّرت العملية");
     } finally {
       setSubmitting(false);
     }
@@ -182,6 +249,7 @@ export function AdminClient() {
                   <th className="px-4 py-3 text-start font-semibold">{t("jd")}</th>
                   <th className="px-4 py-3 text-start font-semibold">{t("review_unit")}</th>
                   <th className="px-4 py-3 text-start font-semibold">{t("stat_bookings")}</th>
+                  <th className="px-4 py-3 text-start font-semibold" />
                 </tr>
               </thead>
               <tbody>
@@ -202,6 +270,15 @@ export function AdminClient() {
                       )}
                     </td>
                     <td className="px-4 py-3 tabular-nums text-ink-muted">{c.bookingsThisSeason}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() => startEdit(c)}
+                        className="text-caption font-semibold text-teal hover:underline"
+                      >
+                        {t("admin_edit")}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -239,7 +316,14 @@ export function AdminClient() {
         {/* نموذج إضافة شاليه */}
         <aside>
           <Card className="p-5">
-            <h2 className="text-section font-bold text-ink">{t("admin_add_chalet")}</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-section font-bold text-ink">{editingId ? t("admin_edit_chalet") : t("admin_add_chalet")}</h2>
+              {editingId && (
+                <button type="button" onClick={cancelEdit} className="text-caption font-semibold text-ink-muted hover:text-ink">
+                  {t("cancel")}
+                </button>
+              )}
+            </div>
             <form onSubmit={submit} className="mt-5 flex flex-col gap-4">
               <Input placeholder={t("admin_name_ar")} value={form.nameAr} onChange={(e) => update("nameAr", e.target.value)} required />
               <Input placeholder={t("admin_name_en")} value={form.nameEn} onChange={(e) => update("nameEn", e.target.value)} required />
@@ -373,6 +457,26 @@ export function AdminClient() {
               {/* الصور */}
               <fieldset className="flex flex-col gap-2">
                 <legend className="mb-1 text-caption font-semibold text-ink-muted">{t("admin_photos")}</legend>
+                {existingMedia.filter((m) => m.type === "image").length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {existingMedia
+                      .filter((m) => m.type === "image")
+                      .map((m) => (
+                        <div key={m.id} className="group relative size-16 overflow-hidden rounded-btn border border-line">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={m.url} alt="" className="size-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeExistingMedia(m.id)}
+                            aria-label={t("admin_remove")}
+                            className="absolute end-0.5 top-0.5 grid size-5 place-items-center rounded-full bg-ink/70 text-[11px] font-bold text-white"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                )}
                 {images.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {images.map((file, i) => (
@@ -409,6 +513,21 @@ export function AdminClient() {
               {/* الفيديو */}
               <fieldset className="flex flex-col gap-2">
                 <legend className="mb-1 text-caption font-semibold text-ink-muted">{t("admin_video")}</legend>
+                {existingMedia
+                  .filter((m) => m.type === "video")
+                  .map((m) => (
+                    <div key={m.id} className="relative w-fit">
+                      <video src={m.url} muted controls className="h-28 rounded-btn border border-line" />
+                      <button
+                        type="button"
+                        onClick={() => removeExistingMedia(m.id)}
+                        aria-label={t("admin_remove")}
+                        className="absolute end-0.5 top-0.5 grid size-5 place-items-center rounded-full bg-ink/70 text-[11px] font-bold text-white"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
                 {video && (
                   <div className="relative w-fit">
                     <video src={URL.createObjectURL(video)} muted controls className="h-28 rounded-btn border border-line" />
@@ -467,13 +586,13 @@ export function AdminClient() {
               />
 
               <Button type="submit" full disabled={submitting || form.acceptedPaymentMethods.length === 0}>
-                {t("admin_submit")}
+                {editingId ? t("admin_save_changes") : t("admin_submit")}
               </Button>
 
-              {justAdded && (
+              {(justAdded || justUpdated) && (
                 <p className="flex items-center gap-2 rounded-chip bg-ok/12 px-3 py-2 text-caption font-semibold text-ok">
                   <IconCheck width={15} height={15} />
-                  {t("admin_added_success")}
+                  {justUpdated ? t("admin_updated_success") : t("admin_added_success")}
                 </p>
               )}
               {submitError && (
