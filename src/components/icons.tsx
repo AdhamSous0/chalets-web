@@ -113,6 +113,15 @@ export const IconCash = (p: P) => (
 export const IconCard = (p: P) => (
   <svg {...S(p)}><rect x="2.5" y="5" width="19" height="14" rx="3" /><path d="M2.5 10h19M6.5 15h3" /></svg>
 );
+export const IconPhone = (p: P) => (
+  <svg {...S(p)}><path d="M5.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3a2 2 0 0 1-2.2 2C9.8 19 5 14.2 3.5 5.7A2 2 0 0 1 5.5 3.5Z" /></svg>
+);
+export const IconMail = (p: P) => (
+  <svg {...S(p)}><rect x="2.5" y="4.5" width="19" height="15" rx="3" /><path d="m3.5 6 8.5 7 8.5-7" /></svg>
+);
+export const IconExternalLink = (p: P) => (
+  <svg {...S(p)}><path d="M9 6H5.5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V15" /><path d="M14 4h6v6M20 4l-9.5 9.5" /></svg>
+);
 
 const AMENITY_ICONS: Record<string, (p: P) => React.JSX.Element> = {
   private_pool: IconPool,

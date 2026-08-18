@@ -1,4 +1,4 @@
-import type { AdminUser, AmenityKey, Chalet, CityKey, TypeKey } from "./data";
+import type { AdminUser, AmenityKey, Chalet, ContactType, CityKey, PaymentMethod, TypeKey } from "./data";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
@@ -90,6 +90,8 @@ export interface NewChaletPayload {
   descriptionEn: string;
   ownerNameAr: string;
   ownerNameEn: string;
+  contacts: { type: ContactType; value: string }[];
+  acceptedPaymentMethods: PaymentMethod[];
   images: File[];
   video: File | null;
 }
@@ -112,6 +114,8 @@ export async function createChalet(payload: NewChaletPayload, adminToken: string
   fd.set("descriptionEn", payload.descriptionEn);
   fd.set("ownerNameAr", payload.ownerNameAr);
   fd.set("ownerNameEn", payload.ownerNameEn);
+  fd.set("contacts", JSON.stringify(payload.contacts));
+  fd.set("acceptedPaymentMethods", JSON.stringify(payload.acceptedPaymentMethods));
   for (const img of payload.images) fd.append("media", img);
   if (payload.video) fd.append("media", payload.video);
 

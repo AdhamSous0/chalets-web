@@ -1,6 +1,5 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ChaletCard } from "@/components/chalet-card";
 import { AmenityIcon, IconSearch } from "@/components/icons";
@@ -22,17 +21,27 @@ type Sort = "recommended" | "price_asc" | "price_desc" | "capacity";
 export function SearchClient() {
   const { t, rtl } = useApp();
   const { price } = usePrice();
-  const params = useSearchParams();
 
   const [chalets, setChalets] = useState<Chalet[]>([]);
-  const [query, setQuery] = useState(params.get("q") ?? "");
-  const [city, setCity] = useState(params.get("city") ?? "all");
-  const [type, setType] = useState<string | null>(params.get("type"));
+  const [query, setQuery] = useState("");
+  const [city, setCity] = useState("all");
+  const [type, setType] = useState<string | null>(null);
   const [maxPrice, setMaxPrice] = useState(PRICE_CEIL);
   const [guests, setGuests] = useState(1);
   const [amenities, setAmenities] = useState<AmenityKey[]>([]);
   const [sort, setSort] = useState<Sort>("recommended");
   const [openFilters, setOpenFilters] = useState(false);
+
+  /** بنقرأ فلاتر الرابط (?city=..&type=..) بعد التركيب — تفادي useSearchParams اللي بيحتاج Suspense */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("q");
+    const c = params.get("city");
+    const ty = params.get("type");
+    if (q) setQuery(q);
+    if (c) setCity(c);
+    if (ty) setType(ty);
+  }, []);
 
   useEffect(() => {
     getChalets()

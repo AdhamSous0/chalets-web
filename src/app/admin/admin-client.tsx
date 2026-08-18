@@ -10,11 +10,15 @@ import {
   ALL_AMENITIES,
   CITY_COORDS,
   CITY_KEYS,
+  CONTACT_TYPES,
+  PAYMENT_METHODS,
   TYPE_KEYS,
   type AdminUser,
   type AmenityKey,
   type Chalet,
   type CityKey,
+  type ContactType,
+  type PaymentMethod,
   type TypeKey,
 } from "@/lib/data";
 
@@ -33,6 +37,8 @@ interface FormState {
   descriptionEn: string;
   ownerNameAr: string;
   ownerNameEn: string;
+  contacts: { type: ContactType; value: string }[];
+  acceptedPaymentMethods: PaymentMethod[];
 }
 
 const emptyForm: FormState = {
@@ -50,6 +56,8 @@ const emptyForm: FormState = {
   descriptionEn: "",
   ownerNameAr: "",
   ownerNameEn: "",
+  contacts: [],
+  acceptedPaymentMethods: ["cash", "card"],
 };
 
 export function AdminClient() {
@@ -84,6 +92,26 @@ export function AdminClient() {
       amenities: prev.amenities.includes(a) ? prev.amenities.filter((x) => x !== a) : [...prev.amenities, a],
     }));
 
+  const togglePayment = (m: PaymentMethod) =>
+    setForm((prev) => ({
+      ...prev,
+      acceptedPaymentMethods: prev.acceptedPaymentMethods.includes(m)
+        ? prev.acceptedPaymentMethods.filter((x) => x !== m)
+        : [...prev.acceptedPaymentMethods, m],
+    }));
+
+  const addContact = () =>
+    setForm((prev) => ({ ...prev, contacts: [...prev.contacts, { type: "phone", value: "" }] }));
+
+  const updateContact = (i: number, patch: Partial<{ type: ContactType; value: string }>) =>
+    setForm((prev) => ({
+      ...prev,
+      contacts: prev.contacts.map((c, idx) => (idx === i ? { ...c, ...patch } : c)),
+    }));
+
+  const removeContact = (i: number) =>
+    setForm((prev) => ({ ...prev, contacts: prev.contacts.filter((_, idx) => idx !== i) }));
+
   const onImagesSelected = (files: FileList | null) => {
     if (!files) return;
     // نسخة فورية من FileList — عشان ما تنفرغ لو انعادت استدعاء الدالة (StrictMode) بعد ما نصفّر input.value
@@ -100,12 +128,19 @@ export function AdminClient() {
     e.preventDefault();
     if (!token) return;
     if (!form.nameAr || !form.nameEn || !form.areaAr || !form.areaEn || !form.ownerNameAr || !form.ownerNameEn) return;
+    if (form.acceptedPaymentMethods.length === 0) return;
 
     setSubmitting(true);
     setSubmitError(null);
     try {
       const created = await createChalet(
-        { ...form, ...CITY_COORDS[form.cityKey], images, video },
+        {
+          ...form,
+          ...CITY_COORDS[form.cityKey],
+          contacts: form.contacts.filter((c) => c.value.trim()),
+          images,
+          video,
+        },
         token,
       );
       setChalets((prev) => [created, ...prev]);
@@ -277,6 +312,64 @@ export function AdminClient() {
                 </div>
               </fieldset>
 
+              {/* طرق الدفع المقبولة */}
+              <fieldset className="flex flex-col gap-2">
+                <legend className="mb-1 text-caption font-semibold text-ink-muted">{t("admin_payment_methods")}</legend>
+                <div className="flex flex-wrap gap-2">
+                  {PAYMENT_METHODS.map((m) => (
+                    <Chip
+                      key={m}
+                      label={t(m === "cash" ? "pay_cash" : "pay_card")}
+                      selected={form.acceptedPaymentMethods.includes(m)}
+                      onClick={() => togglePayment(m)}
+                    />
+                  ))}
+                </div>
+                {form.acceptedPaymentMethods.length === 0 && (
+                  <p className="text-caption text-danger">{t("admin_payment_methods_hint")}</p>
+                )}
+              </fieldset>
+
+              {/* وسائل التواصل مع المالك */}
+              <fieldset className="flex flex-col gap-2">
+                <legend className="mb-1 text-caption font-semibold text-ink-muted">{t("admin_contacts")}</legend>
+                {form.contacts.map((c, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <select
+                      value={c.type}
+                      onChange={(e) => updateContact(i, { type: e.target.value as ContactType })}
+                      className="rounded-field border border-line bg-white px-2 py-2.5 text-caption text-ink outline-none focus:border-teal"
+                    >
+                      {CONTACT_TYPES.map((ct) => (
+                        <option key={ct} value={ct}>
+                          {t(`contact_type_${ct}`)}
+                        </option>
+                      ))}
+                    </select>
+                    <Input
+                      placeholder={t("admin_contact_value_placeholder")}
+                      value={c.value}
+                      onChange={(e) => updateContact(i, { value: e.target.value })}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeContact(i)}
+                      aria-label={t("admin_remove")}
+                      className="grid size-8 shrink-0 place-items-center rounded-full bg-ink/70 text-[13px] font-bold text-white"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addContact}
+                  className="inline-flex w-fit items-center gap-2 rounded-btn border border-dashed border-line px-3 py-2 text-caption font-semibold text-ink-muted transition-colors hover:border-teal hover:text-teal"
+                >
+                  {t("admin_add_contact")}
+                </button>
+              </fieldset>
+
               {/* الصور */}
               <fieldset className="flex flex-col gap-2">
                 <legend className="mb-1 text-caption font-semibold text-ink-muted">{t("admin_photos")}</legend>
@@ -373,7 +466,7 @@ export function AdminClient() {
                 required
               />
 
-              <Button type="submit" full disabled={submitting}>
+              <Button type="submit" full disabled={submitting || form.acceptedPaymentMethods.length === 0}>
                 {t("admin_submit")}
               </Button>
 

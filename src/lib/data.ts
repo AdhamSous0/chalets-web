@@ -17,6 +17,14 @@ export type TypeKey = "family" | "youth" | "events";
 export type BookingStatus = "pending" | "confirmed" | "cancelled";
 export type PaymentMethod = "cash" | "card";
 
+export type ContactType = "phone" | "whatsapp" | "email" | "facebook" | "instagram" | "telegram";
+
+export interface ContactItem {
+  id: string;
+  type: ContactType;
+  value: string;
+}
+
 export type AmenityKey =
   | "private_pool"
   | "shared_pool"
@@ -72,6 +80,11 @@ export interface Chalet {
   reviewCount: number;
   verifiedOwner: boolean;
 
+  /** وسائل التواصل مع المالك — يديرها الأدمن، وتظهر كأزرار حقيقية بصفحة التفاصيل */
+  contacts: ContactItem[];
+  /** طرق الدفع المفعّلة لهاد الشاليه تحديدًا */
+  acceptedPaymentMethods: PaymentMethod[];
+
   /** صور وفيديو الشاليه — فاضية لو ما في، بترسم مشهد فني بديل */
   media?: MediaItem[];
 }
@@ -109,6 +122,10 @@ export const CITY_COORDS: Record<CityKey, LatLng> = {
 };
 
 export const TYPE_KEYS: TypeKey[] = ["family", "youth", "events"];
+
+export const CONTACT_TYPES: ContactType[] = ["phone", "whatsapp", "email", "facebook", "instagram", "telegram"];
+
+export const PAYMENT_METHODS: PaymentMethod[] = ["cash", "card"];
 
 export const ALL_AMENITIES: AmenityKey[] = [
   "private_pool",

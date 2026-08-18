@@ -22,7 +22,7 @@ export function BookingClient({ chalet }: { chalet: Chalet }) {
   const [from, setFrom] = useState<Date | null>(null);
   const [to, setTo] = useState<Date | null>(null);
   const [guests, setGuests] = useState(2);
-  const [payment, setPayment] = useState<PaymentMethod>("cash");
+  const [payment, setPayment] = useState<PaymentMethod>(chalet.acceptedPaymentMethods[0] ?? "cash");
   const [result, setResult] = useState<Result>(null);
   const [bookingNo, setBookingNo] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -281,8 +281,8 @@ export function BookingClient({ chalet }: { chalet: Chalet }) {
           <section>
             <h2 className="mb-3 text-section font-bold text-ink">{t("payment_method")}</h2>
             <div className="flex flex-col gap-3">
-              {payOption("cash", IconCash, t("pay_cash"), t("pay_cash_sub"))}
-              {payOption("card", IconCard, t("pay_card"), t("pay_card_sub"))}
+              {chalet.acceptedPaymentMethods.includes("cash") && payOption("cash", IconCash, t("pay_cash"), t("pay_cash_sub"))}
+              {chalet.acceptedPaymentMethods.includes("card") && payOption("card", IconCard, t("pay_card"), t("pay_card_sub"))}
             </div>
           </section>
         </div>

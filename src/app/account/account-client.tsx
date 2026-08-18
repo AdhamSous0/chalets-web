@@ -1,6 +1,5 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ChaletRow } from "@/components/chalet-card";
 import { IconUser } from "@/components/icons";
@@ -16,12 +15,17 @@ type Tab = "bookings" | "favorites" | "profile";
 export function AccountClient() {
   const { t, rtl, locale, user, token, signOut, favorites } = useApp();
   const { price } = usePrice();
-  const params = useSearchParams();
 
-  const [tab, setTab] = useState<Tab>((params.get("tab") as Tab) ?? "bookings");
+  const [tab, setTab] = useState<Tab>("bookings");
   const [upcoming, setUpcoming] = useState(true);
   const [allBookings, setAllBookings] = useState<ApiBooking[]>([]);
   const [chalets, setChalets] = useState<Chalet[]>([]);
+
+  /** بنقرأ ?tab=.. من الرابط بعد التركيب — تفادي useSearchParams اللي بيحتاج Suspense */
+  useEffect(() => {
+    const tabParam = new URLSearchParams(window.location.search).get("tab") as Tab | null;
+    if (tabParam) setTab(tabParam);
+  }, []);
 
   useEffect(() => {
     if (token) getBookings(token).then(setAllBookings).catch(() => setAllBookings([]));

@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { SearchClient } from "./search-client";
 
 export const metadata = {
@@ -7,9 +6,5 @@ export const metadata = {
 };
 
 export default function SearchPage() {
-  return (
-    <Suspense fallback={<div className="shell py-20 text-ink-muted">…</div>}>
-      <SearchClient />
-    </Suspense>
-  );
+  return <SearchClient />;
 }

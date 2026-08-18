@@ -4,16 +4,41 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import {
   AmenityIcon,
+  IconChat,
+  IconExternalLink,
   IconGuests,
   IconHeart,
   IconLocation,
+  IconMail,
   IconNav,
+  IconPhone,
   IconVerified,
 } from "@/components/icons";
 import { SceneArt } from "@/components/scene-art";
 import { ButtonLink, Card, Rating, TypeBadge } from "@/components/ui";
 import { useApp, usePrice } from "@/lib/app-context";
-import type { Chalet } from "@/lib/data";
+import type { Chalet, ContactType } from "@/lib/data";
+
+/** رابط فعلي حسب نوع وسيلة التواصل — tel/wa.me/mailto للأنواع البروتوكولية، رابط مباشر للباقي */
+function contactHref(type: ContactType, value: string): string {
+  switch (type) {
+    case "phone":
+      return `tel:${value.replace(/\s+/g, "")}`;
+    case "whatsapp":
+      return `https://wa.me/${value.replace(/[^\d]/g, "")}`;
+    case "email":
+      return `mailto:${value}`;
+    default:
+      return value;
+  }
+}
+
+function ContactIcon({ type, ...p }: { type: ContactType } & React.SVGProps<SVGSVGElement>) {
+  if (type === "phone") return <IconPhone {...p} />;
+  if (type === "whatsapp") return <IconChat {...p} />;
+  if (type === "email") return <IconMail {...p} />;
+  return <IconExternalLink {...p} />;
+}
 
 // Leaflet بلمس window، فبتتحمّل بالمتصفح فقط
 const ChaletMap = dynamic(() => import("@/components/chalet-map"), {
@@ -141,12 +166,22 @@ export function ChaletClient({ chalet }: { chalet: Chalet }) {
                   {t("hosting_since")} {chalet.hostSince}
                 </p>
               </div>
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-btn border border-teal px-4 py-2.5 text-body font-semibold text-teal transition-colors hover:bg-teal-light"
-              >
-                {t("contact")}
-              </button>
+              {chalet.contacts.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {chalet.contacts.map((c) => (
+                    <a
+                      key={c.id}
+                      href={contactHref(c.type, c.value)}
+                      target={c.type === "phone" ? undefined : "_blank"}
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-btn border border-teal px-4 py-2.5 text-body font-semibold text-teal transition-colors hover:bg-teal-light"
+                    >
+                      <ContactIcon type={c.type} width={17} height={17} />
+                      {t(`contact_type_${c.type}`)}
+                    </a>
+                  ))}
+                </div>
+              )}
             </Card>
           </section>
 
